@@ -35,6 +35,8 @@ For each new terminal, run `cd ~/code/lerobot_robot_ufactory` and `source .venv/
 - Both arms: `config/liralab/dual_xarm7_gello.yaml`
 
 ```bash
+cd ~/code/lerobot_robot_ufactory
+source .venv/bin/activate
 ls -l /dev/serial/by-id/
 CFG=config/liralab/dual_xarm7_gello.yaml
 vim "$CFG" # i: edit; Esc, :wq, Enter: save and exit.
