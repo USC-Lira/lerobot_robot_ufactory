@@ -10,13 +10,13 @@ mkdir -p ~/code
 cd ~/code
 git clone https://github.com/USC-Lira/lerobot_robot_ufactory.git
 cd lerobot_robot_ufactory
-git switch codex/lira-gello-setup
+git switch lira-gello-setup
 uv venv --python 3.12
 source .venv/bin/activate
 uv pip install --torch-backend cpu -e ".[gello]" "lerobot[intelrealsense]==0.6.1"
 ```
 
-Use the setup branch until [PR #1](https://github.com/USC-Lira/lerobot_robot_ufactory/pull/1) is merged. For each new terminal, run `cd ~/code/lerobot_robot_ufactory` and `source .venv/bin/activate`.
+Use this branch until it is merged into main. For each new terminal, run `cd ~/code/lerobot_robot_ufactory` and `source .venv/bin/activate`.
 
 ## Choose and configure
 
