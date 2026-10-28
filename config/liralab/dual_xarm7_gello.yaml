@@ -12,7 +12,7 @@ robot:
       robot_dof: 7
       control_space: joint
       robot_ip: "192.168.1.216"
-      gripper_type: 1
+      gripper_type: 1 # Match the currently mounted tool.
       gripper_speed: 500
       max_joint_velocity: 10
       start_joints: null
@@ -36,7 +36,7 @@ robot:
       robot_dof: 7
       control_space: joint
       robot_ip: "192.168.1.239"
-      gripper_type: 1
+      gripper_type: 1 # Match the currently mounted tool.
       gripper_speed: 500
       max_joint_velocity: 10
       start_joints: null

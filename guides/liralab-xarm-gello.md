@@ -1,5 +1,16 @@
 # LIRA Lab: xArm7 + GELLO
 
+## Create the account (administrator)
+
+An existing sudo user runs these on the workstation. Replace `YOUR_USERNAME` with the new username:
+
+```bash
+sudo adduser YOUR_USERNAME
+sudo usermod -aG dialout YOUR_USERNAME
+```
+
+Log into the new account after the group is assigned. If it was already logged in, log out and back in.
+
 ## Connect and install
 
 ```bash
@@ -31,9 +42,7 @@ nano "$CFG"
 
 Replace each `REPLACE_GELLO_*` path with the corresponding leader's full USB path. Identify the physical pairing onsite; do not assign leaders by `/dev/ttyUSB0` numbering. Known adapter serial: `FT8ISRWA`. The second GELLO is currently unplugged.
 
-Confirm each mounted gripper (`gripper_type: 1` for AG1011) and each joint direction (`joint_signs`). Keep `robot.start_joints: null`: the arm stays at its current pose during initialization; Space aligns the leader to that pose. The configured joint speed is 10°/s. Initialization can still open the grippers.
-
-If the serial port is not readable/writable, an administrator can run `sudo usermod -aG dialout YOUR_USERNAME`; then log out and back in. Skip this if access already works.
+Set `gripper_type` for the tool currently mounted on each arm, and verify each joint direction (`joint_signs`). Keep `robot.start_joints: null`: the arm stays at its current pose during initialization; Space aligns the leader to that pose. The configured joint speed is 10°/s. Initialization can still open attached grippers.
 
 ```bash
 uf-robot-teleop --config_path="$CFG" --check-config

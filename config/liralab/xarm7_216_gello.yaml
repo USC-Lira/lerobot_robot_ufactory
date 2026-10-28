@@ -5,7 +5,7 @@ robot:
   robot_dof: 7
   control_space: joint
   robot_ip: "192.168.1.216"
-  gripper_type: 1 # AG1011; confirm the mounted gripper before running.
+  gripper_type: 1 # Match the currently mounted tool; see GripperType in uf_robot.py.
   gripper_speed: 500
   max_joint_velocity: 10 # degrees/s
   start_joints: null # Keep the current arm pose; no startup homing.
