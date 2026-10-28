@@ -1,20 +1,30 @@
 # LIRA Lab: xArm7 + GELLO
 
-## Create the account (administrator)
+Start with one arm. After it works, repeat for the other arm before trying both together. Installation, GELLO joint reads, and camera I/O were tested previously; live following and recording still need onsite validation.
 
-An existing sudo user runs these on the workstation. Replace `YOUR_USERNAME` with the new username:
+## 1. SSH
 
-```bash
-sudo adduser YOUR_USERNAME
-sudo usermod -aG dialout YOUR_USERNAME
-```
-
-Log into the new account after the group is assigned. If it was already logged in, log out and back in.
-
-## Connect and install
+Replace `YOUR_USERNAME` with your workstation account (`peiqi` for the current setup):
 
 ```bash
 ssh -t YOUR_USERNAME@10.137.31.180
+```
+
+Run the remaining commands on the workstation. Use a desktop terminal in your own account for teleoperation and recording, so keyboard controls work.
+
+## 2. Prepare the environment
+
+**Already installed (including peiqi):**
+
+```bash
+cd ~/code/lerobot_robot_ufactory
+git pull --ff-only origin main
+source .venv/bin/activate
+```
+
+**First installation only:** skip this block if the existing environment works.
+
+```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 mkdir -p ~/code
@@ -24,51 +34,103 @@ cd lerobot_robot_ufactory
 uv venv --python 3.12
 source .venv/bin/activate
 uv pip install --torch-backend cpu -e ".[gello]" "lerobot[intelrealsense]==0.6.1"
+uv pip check
 ```
 
-For each new terminal, run `cd ~/code/lerobot_robot_ufactory` and `source .venv/bin/activate`.
+If the repository already exists but `.venv` is missing, run the installation block starting at `uv venv` from inside the repository.
 
-## Choose and configure
+## 3. Prepare one arm
 
-- Arm `.216`: `config/liralab/xarm7_216_gello.yaml`
-- Arm `.239`: `config/liralab/xarm7_239_gello.yaml`
-- Both arms: `config/liralab/dual_xarm7_gello.yaml`
+Switch on its control box. Open UFACTORY Studio on the workstation desktop: [arm .216](http://192.168.1.216:18333) or [arm .239](http://192.168.1.239:18333). Confirm the IP of the physical arm you intend to use and resolve any controller errors before continuing.
+
+Connect that arm's GELLO USB cable and switch on GELLO's external power. USB alone does not power the motors. Keep the emergency stop accessible and clear the workspace.
+
+## 4. Configure
+
+This example uses `.239`. For `.216`, replace `239` with `216` in both filenames:
 
 ```bash
-ls -l /dev/serial/by-id/
-CFG=config/liralab/dual_xarm7_gello.yaml
+CFG=config/liralab/xarm7_239.local.yaml
+test -f "$CFG" || cp config/liralab/xarm7_239_gello.yaml "$CFG"
+ls /dev/serial/by-id/*
 nano "$CFG"
 ```
 
-Replace each `REPLACE_GELLO_*` path with the corresponding leader's full USB path. Identify the physical pairing onsite; do not assign leaders by `/dev/ttyUSB0` numbering. Known adapter serial: `FT8ISRWA`. The second GELLO is currently unplugged.
+The USB listing should show a full `/dev/serial/by-id/...` path. Replace `teleop.port` with the path for this GELLO; do not use changing `/dev/ttyUSB0` numbering. If no path appears, check the USB connection before continuing. Save in nano with **Ctrl+O**, **Enter**, then exit with **Ctrl+X**.
 
-Set `gripper_type` for the tool currently mounted on each arm, and verify each joint direction (`joint_signs`). Keep `robot.start_joints: null`: the arm stays at its current pose during initialization; Space aligns the leader to that pose. The configured joint speed is 10°/s. Initialization can still open attached grippers.
+Match `gripper_type` to the currently mounted tool ([supported values](../src/lerobot_robot_ufactory/robots/uf_robot/uf_robot.py)). Keep `robot.start_joints: null` to avoid startup homing. The supplied camera settings are for the previously tested front and overhead cameras; update their serials if cameras change.
+
+For the first test, keep the supplied 15-second, one-episode dataset settings. If `dataset.root` already exists, choose a new root or use `-r` when recording to append. Set `dataset.single_task` to describe the task when collecting actual data.
 
 ```bash
 uf-robot-teleop --config_path="$CFG" --check-config
 uf-lerobot-record --config_path="$CFG" --check-config
 ```
 
-These checks do not open any hardware or verify physical pairing.
+Both should print **Configuration structure OK**. These checks parse configuration; they do not test USB permissions, motor power, cameras, or robot connectivity.
 
-## Operate onsite
+## 5. Test following
 
-Power both required GELLOs, release their triggers, and hold them still. Clear the workspace and keep the emergency stop accessible. Use a workstation desktop terminal for keyboard controls.
+In a workstation desktop terminal, activate the environment and set the same configuration again:
 
 ```bash
+cd ~/code/lerobot_robot_ufactory
+source .venv/bin/activate
+CFG=config/liralab/xarm7_239.local.yaml
 uf-robot-teleop --config_path="$CFG"
 ```
 
-Enter enables the selected arms and initializes/opens grippers. **Space** starts/pauses tracking; **Esc** stops and exits. Test one joint at a time before collecting data. Exit teleoperation first.
+1. Check the printed GELLO-to-arm mapping. Release the trigger and hold GELLO still.
+2. **Enter** enables the arm and initializes/opens its gripper. Wait for the keyboard-control prompt.
+3. **Space** starts following. Slowly move one GELLO joint a small amount, then test the others and the trigger. Confirm the intended arm follows in the intended directions.
+4. **Space** pauses; **Esc** stops and exits. If movement is unexpected, stop and correct the configuration before collecting data.
+
+If startup reports `Permission denied`, an administrator must grant `dialout` access; log out and back in afterward. If motors do not reply, check GELLO's external power. If initialization reports a gripper error, verify the current tool and its configuration before retrying.
+
+## 6. Record and replay
+
+Exit teleoperation first. In the same desktop terminal:
 
 ```bash
 uf-lerobot-record --config_path="$CFG"
 ```
 
-Recording: **Space** starts, **Right** saves, **Left** discards, **Esc** exits. Wait for saving to finish. Change `dataset.root` for a new dataset; add `-r` to append to the existing one.
+**Enter** initializes hardware. **Space** starts the episode. The test ends after 15 seconds; **Right** saves early, **Left** discards, and **Esc** exits without saving the current episode. Wait for **save finish** before closing. To append to the same dataset:
 
-The profiles use D455 `035622251296` and D415 `217222067304` at 640×480/30 fps. Dual recording opens each shared camera once.
+```bash
+uf-lerobot-record -r --config_path="$CFG"
+```
 
-## Validation status
+For the default `.239` test dataset, replay the first front-camera video; **q** closes the player:
 
-GELLO `FT8ISRWA` joint reads and both cameras were tested previously. Offline tests saved and resumed a two-camera synthetic dataset. Live arm following, dual GELLO control, and recording with real hardware still need onsite validation. The last check found `.216` unreachable and `.239` returning gripper communication error C19. Resolve these before testing that configuration.
+```bash
+SDL_RENDER_DRIVER=software ffplay -an -loop 0 \
+  ~/data/xarm7_239_smoke/videos/observation.images.front/chunk-000/file-000.mp4
+```
+
+Replace `front` with `overhead` to check the other view. Use your configured `dataset.root` if you changed it (`~/data/xarm7_216_smoke` for the `.216` template). Confirm both views show the recorded movement.
+
+## Both arms (after single-arm tests)
+
+Connect and power both GELLOs. Identify two different USB paths and confirm each physical pairing.
+
+```bash
+CFG=config/liralab/dual_xarm7.local.yaml
+test -f "$CFG" || cp config/liralab/dual_xarm7_gello.yaml "$CFG"
+nano "$CFG"
+uf-robot-teleop --config_path="$CFG" --check-config
+uf-lerobot-record --config_path="$CFG" --check-config
+```
+
+Set both ports, then use the same teleoperation and recording commands above. Shared cameras are opened once. The default replay root is `~/data/dual_xarm7_smoke`; image directories are `observation.images.arm216.front` and `observation.images.arm216.overhead`.
+
+## New accounts only (administrator)
+
+Skip account creation if your account already exists. An existing sudo user runs these on the workstation for a new account:
+
+```bash
+sudo adduser YOUR_USERNAME
+sudo usermod -aG dialout YOUR_USERNAME
+```
+
+For an existing account that lacks serial access, run only the `usermod` command. Log out and back in after group changes. Normal operation does not require sudo.

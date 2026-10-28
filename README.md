@@ -2,7 +2,7 @@
 
 GELLO teleoperation and LeRobot data collection for the lab's two xArm7 arms.
 
-Start with the [setup guide](guides/liralab-xarm-gello.md) for account creation, serial permissions, installation, and hardware configuration. The illustrated version is on [Notion](https://app.notion.com/p/407017f4566081cbaa38e2a6ced8cb8b).
+Start with the [setup guide](guides/liralab-xarm-gello.md). Existing users can skip account creation and installation. The illustrated version is on [Notion](https://app.notion.com/p/407017f4566081cbaa38e2a6ced8cb8b).
 
 ## Configurations
 
@@ -19,12 +19,12 @@ After completing setup:
 ```bash
 cd ~/code/lerobot_robot_ufactory
 source .venv/bin/activate
-CFG=config/liralab/dual_xarm7_gello.yaml
+CFG=config/liralab/xarm7_239.local.yaml
 uf-robot-teleop --config_path="$CFG" --check-config
 uf-lerobot-record --config_path="$CFG" --check-config
 ```
 
-Configuration checks do not open hardware.
+Use the local configuration you prepared in the guide. Configuration checks do not open hardware.
 
 Teleoperate from a workstation desktop terminal:
 
