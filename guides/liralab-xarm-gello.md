@@ -37,7 +37,7 @@ For each new terminal, run `cd ~/code/lerobot_robot_ufactory` and `source .venv/
 ```bash
 ls -l /dev/serial/by-id/
 CFG=config/liralab/dual_xarm7_gello.yaml
-nano "$CFG"
+vim "$CFG" # i: edit; Esc, :wq, Enter: save and exit.
 ```
 
 Replace each `REPLACE_GELLO_*` path with the corresponding leader's full USB path. Identify the physical pairing onsite; do not assign leaders by `/dev/ttyUSB0` numbering. Known adapter serial: `FT8ISRWA`. The second GELLO is currently unplugged.
