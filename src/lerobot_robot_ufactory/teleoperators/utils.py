@@ -21,6 +21,9 @@ def make_teleoperator_from_config(config: TeleoperatorConfig) -> Teleoperator:
     if config.type == "uf::gello_teleop":
         from .gello_teleop import GelloTeleop
         return GelloTeleop(config)
+    elif config.type == "uf::multiple_gello_teleop":
+        from .gello_teleop import MultipleGelloTeleop
+        return MultipleGelloTeleop(config)
     elif config.type == "uf::pika_teleop":
         from .pika_teleop import PikaTeleop
         return PikaTeleop(config)

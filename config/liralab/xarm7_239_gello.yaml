@@ -1,0 +1,43 @@
+# Set the GELLO port after identifying which leader belongs to this arm.
+robot:
+  type: uf::robot
+  id: arm239
+  robot_dof: 7
+  control_space: joint
+  robot_ip: "192.168.1.239"
+  gripper_type: 1 # AG1011; C19 communication error remains unresolved on this arm.
+  gripper_speed: 500
+  max_joint_velocity: 10 # degrees/s
+  start_joints: null # Keep the current arm pose; no startup homing.
+  cameras:
+    front:
+      type: intelrealsense
+      serial_number_or_name: "035622251296"
+      width: 640
+      height: 480
+      fps: 30
+    overhead:
+      type: intelrealsense
+      serial_number_or_name: "217222067304"
+      width: 640
+      height: 480
+      fps: 30
+teleop:
+  type: uf::gello_teleop
+  id: gello239
+  port: "/dev/serial/by-id/REPLACE_GELLO_239"
+  joint_ids: [1, 2, 3, 4, 5, 6, 7]
+  joint_signs: [1, 1, 1, 1, 1, 1, 1] # Verify each joint direction onsite.
+  start_joints: [0, 0, 0, 0, 0, 0, 0] # Leader reference; Space aligns to the arm.
+  gripper_id: 8
+dataset:
+  root: "~/data/xarm7_239_smoke"
+  repo_id: local/xarm7_239_smoke
+  no_stamp: true
+  single_task: GELLO teleoperation test
+  fps: 30
+  episode_time_s: 15
+  reset_time_s: 5
+  num_episodes: 1
+  push_to_hub: false
+  streaming_encoding: true

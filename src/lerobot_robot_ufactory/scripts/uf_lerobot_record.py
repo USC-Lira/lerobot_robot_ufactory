@@ -2,6 +2,7 @@ import sys
 import argparse
 import logging
 import time
+from pathlib import Path
 from dataclasses import asdict
 from pprint import pformat
 import lerobot_robot_ufactory # patch
@@ -15,11 +16,14 @@ from lerobot.utils.visualization_utils import (
     init_visualization,
     shutdown_visualization,
 )
-from lerobot.configs import parser
+from lerobot_robot_ufactory.configs import parser
 from lerobot_robot_ufactory.scripts._uf_lerobot.record_loop import record_loop  # 覆盖星号导入的原生 record_loop
 from lerobot_robot_ufactory.teleoperators.uf_mock_teleop import UFMockTeleop
 from lerobot_robot_ufactory.teleoperators.base_teleop import UFBaseTeleop
 from lerobot_robot_ufactory.utils.keyboard import KeyboardState, register_keyboard_controls
+from lerobot_robot_ufactory.utils.gello_setup import (
+    close_devices, confirm_gello_start, validate_gello_config,
+)
 
 
 def record(
@@ -169,7 +173,7 @@ def record(
         if not listener:
             input('⌨   Press Enter to start record >>> ')
             if is_uf_teleop:
-                teleop.set_teleop_enabled(True)
+                teleop.set_teleop_enabled(True, robot.get_observation())
             kb_state.set_event('recorded', True)
             print('\n********** Episode Record Loop Start **********')
 
@@ -251,16 +255,13 @@ def record(
     finally:
         print('\n********** Episode Record Loop Exit **********')
 
-        if dataset:
-            dataset.finalize()
-
-        if robot.is_connected:
-            robot.disconnect()
-        if teleop and teleop.is_connected:
-            teleop.disconnect()
+        close_devices(robot, teleop)
 
         if listener is not None:
             listener.stop()
+
+        if dataset:
+            dataset.finalize()
 
         if cfg.display_data:
             shutdown_visualization(cfg.display_mode)
@@ -278,6 +279,8 @@ def get_cfg(cfg: RecordConfig) -> RecordConfig:
 
 def main():
     arg_parser = argparse.ArgumentParser(description='configuration args')
+    arg_parser.add_argument('--check-config', action='store_true',
+                            help='Parse/check mappings without opening any hardware')
     arg_parser.add_argument('-r',
                        action='store_true', # specify --resume if resume needs to be True
                        default=False,
@@ -290,11 +293,18 @@ def main():
     sys.argv = [sys.argv[0]] + unknown
     register_third_party_plugins()
     cfg = get_cfg()
+    validate_gello_config(cfg)
+    if cfg.dataset.root is not None:
+        cfg.dataset.root = Path(cfg.dataset.root).expanduser()
+    if args.check_config:
+        print('Configuration structure OK. Hardware availability, pairing and recording are not tested.')
+        return
     if args.r:
         cfg.resume = True
     cfg.play_sounds = False
     if args.streaming_encoding and not cfg.dataset.streaming_encoding:
         cfg.dataset.streaming_encoding = True
+    confirm_gello_start(cfg)
     record(cfg)
 
 

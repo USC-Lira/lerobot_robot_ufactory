@@ -18,8 +18,8 @@ class UFRobotConfig(RobotConfig):
     gripper_speed: int = -1     # auto
     gripper_force: int = -1     # auto
     observe_joint_vel: bool = False # only effective in joint control mode
-    start_joints: Tuple[float, ...] = (0, 0, 0, 90, 0, 90, 0) # °
-    start_tcp_pose: Tuple[float, ...] = None # [x, y, z, roll(°), pitch(°), yaw(°)]
+    start_joints: Tuple[float, ...] | None = (0, 0, 0, 90, 0, 90, 0) # °; None keeps current pose
+    start_tcp_pose: Tuple[float, ...] | None = None # [x, y, z, roll(°), pitch(°), yaw(°)]
     max_joint_velocity: int = 90   # °/s, only effective in joint control mode
     max_linear_velocity: int = 200 # mm/s, only effective in cartesian control mode
     no_action: bool = False # only for debug

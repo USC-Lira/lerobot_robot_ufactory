@@ -29,7 +29,7 @@ dependencies = [
     "lerobot[dataset]",
     "lerobot[deepdiff-dep]",
     "lerobot[viz]",
-    "xarm-python-sdk",
+    "xarm-python-sdk==1.18.4",
     "opencv-python",
 ]
 
@@ -43,8 +43,8 @@ uf-camera-view = "lerobot_robot_ufactory.scripts.uf_camera_view:main"
 [project.optional-dependencies]
 # GELLO 遥操作
 gello = [
-    "gello @ git+https://github.com/xArm-Developer/gello_software.git",
-    "dynamixel-sdk @ git+https://github.com/ROBOTIS-GIT/DynamixelSDK.git#subdirectory=python",
+    "gello @ https://github.com/xArm-Developer/gello_software/archive/523437fa4615155813124efeae26fdef32e546a0.tar.gz",
+    "dynamixel-sdk @ git+https://github.com/ROBOTIS-GIT/DynamixelSDK.git@a8d35d51c87e7d253ece1baa963f498a8d933fa0#subdirectory=python",
 ]
 # SpaceMouse 遥操作
 spacemouse = [

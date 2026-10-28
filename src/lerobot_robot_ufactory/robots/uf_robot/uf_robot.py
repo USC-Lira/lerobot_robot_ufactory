@@ -221,6 +221,7 @@ class UFRobot(Robot, Thread):
     def _cleanup_on_connect_failure(self, connected_resources):
         if self.real_arm is not None:
             try:
+                self.real_arm.set_state(4)
                 self.real_arm.disconnect()
             except Exception:
                 pass
@@ -229,6 +230,7 @@ class UFRobot(Robot, Thread):
                 res.disconnect()
             except Exception:
                 pass
+        self._is_connected = False
 
     def configure(self) -> None:
         self.real_arm.motion_enable()
@@ -274,7 +276,12 @@ class UFRobot(Robot, Thread):
                 raise RuntimeError(f"Failed to set correct state to Gripper! Controller Error code: {err_warn[0]} !")
         
         if self._start_joints is not None:
-            self.real_arm.set_servo_angle(angle=self._start_joints, is_radian=True, wait=True)
+            code = self.real_arm.set_servo_angle(
+                angle=self._start_joints, speed=self._max_joint_velocity,
+                is_radian=True, wait=True,
+            )
+            if code != 0:
+                raise RuntimeError(f"Failed to reach starting joints: SDK code {code}")
         if self._start_tcp_pose is not None:
             self.real_arm.set_position(*self._start_tcp_pose, speed=100, is_radian=True, wait=True)
             _, self._start_joints = self.real_arm.get_servo_angle(is_radian=True)
@@ -449,16 +456,19 @@ class UFRobot(Robot, Thread):
         pass
 
     def disconnect(self) -> None:
-        self.real_arm.set_state(4) # stop
-        self.real_arm.set_mode(0)
-        if self._use_rt_report:
+        if self.real_arm is not None and self.real_arm.connected:
+            self.real_arm.set_state(4) # stop
+            self.real_arm.set_mode(0)
+        if self._use_rt_report and self.is_alive():
             self.report_stop_event.set()
             self.join()
-        self.real_arm.disconnect()
+        if self.real_arm is not None:
+            self.real_arm.disconnect()
         # CHECK!! how about gripper? 
 
         for cam in self.cameras.values():
-            cam.disconnect()
+            if cam.is_connected:
+                cam.disconnect()
 
         self._is_connected = False
 

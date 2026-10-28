@@ -2,6 +2,7 @@
 
 import queue
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 from lerobot.robots import Robot
 from .multiple_uf_robot_config import MultipleUFRobotConfig
@@ -70,20 +71,22 @@ class MultipleUFRobot(Robot):
         return all(robot.is_calibrated for robot in self.robots.values())
 
     def connect(self, calibrate: bool = True) -> None:
-        if self._is_async_connect:
-            threads = []
-            for robot in self.robots.values():
-                thread = threading.Thread(target=robot.connect, kwargs={"calibrate": calibrate}, daemon=True)
-                threads.append(thread)
-                thread.start()
-            for thread in threads:
-                thread.join()
-        else:
-            for robot in self.robots.values():
-                robot.connect(calibrate=calibrate)
-        if self._is_async_action:
-            for thread in self.action_threads.values():
-                thread.start()
+        try:
+            if self._is_async_connect:
+                with ThreadPoolExecutor(max_workers=len(self.robots)) as pool:
+                    futures = [pool.submit(robot.connect, calibrate=calibrate)
+                               for robot in self.robots.values()]
+                    for future in futures:
+                        future.result()
+            else:
+                for robot in self.robots.values():
+                    robot.connect(calibrate=calibrate)
+            if self._is_async_action:
+                for thread in self.action_threads.values():
+                    thread.start()
+        except BaseException:
+            self.disconnect()
+            raise
 
     def calibrate(self) -> None:
         for robot in self.robots.values():
@@ -91,13 +94,10 @@ class MultipleUFRobot(Robot):
 
     def configure(self) -> None:
         if self._is_async_configure:
-            threads = []
-            for robot in self.robots.values():
-                thread = threading.Thread(target=robot.configure, daemon=True)
-                threads.append(thread)
-                thread.start()
-            for thread in threads:
-                thread.join()
+            with ThreadPoolExecutor(max_workers=len(self.robots)) as pool:
+                futures = [pool.submit(robot.configure) for robot in self.robots.values()]
+                for future in futures:
+                    future.result()
         else:
             for robot in self.robots.values():
                 robot.configure()
@@ -107,9 +107,10 @@ class MultipleUFRobot(Robot):
             for key in self.robots:
                 self.action_queues[key].put(self._action_stop_sentinel)
             for thread in self.action_threads.values():
-                thread.join(timeout=2.0)
-        for robot in self.robots.values():
-            robot.disconnect()
+                if thread.is_alive():
+                    thread.join(timeout=2.0)
+        from lerobot_robot_ufactory.utils.gello_setup import close_devices
+        close_devices(*self.robots.values())
 
     def get_observation(self) -> dict[str, Any]:    
         observations = {}

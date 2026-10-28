@@ -25,6 +25,9 @@ from lerobot.utils.utils import (
 from lerobot_robot_ufactory.configs import parser
 from lerobot_robot_ufactory.utils.keyboard import KeyboardState, register_keyboard_controls
 from lerobot_robot_ufactory.teleoperators.base_teleop import UFBaseTeleop
+from lerobot_robot_ufactory.utils.gello_setup import (
+    close_devices, confirm_gello_start, validate_gello_config,
+)
 
 
 @dataclass
@@ -52,9 +55,10 @@ def teleop_loop(cfg: TeleopConfig):
 
     teleop_action_processor, robot_action_processor, robot_observation_processor = make_default_processors()
 
+    listener = None
     try:
-        robot.connect()
         teleop.connect()
+        robot.connect()
 
         sleep_time_s = 1 / cfg.fps
 
@@ -155,8 +159,7 @@ def teleop_loop(cfg: TeleopConfig):
             robot.send_action(robot_action_to_send)
     finally:
         print('\n********** Teleop Control Loop Exit **********')
-        robot.disconnect()
-        teleop.disconnect()
+        close_devices(robot, teleop)
         if listener is not None:
             listener.stop()
 
@@ -166,10 +169,17 @@ def get_cfg(cfg: TeleopConfig) -> TeleopConfig:
 
 def main():
     arg_parser = argparse.ArgumentParser(description='configuration args')
+    arg_parser.add_argument('--check-config', action='store_true',
+                            help='Parse/check mappings without opening any hardware')
     args, unknown = arg_parser.parse_known_args()
     sys.argv = [sys.argv[0]] + unknown
     register_third_party_plugins()
     cfg = get_cfg()
+    validate_gello_config(cfg)
+    if args.check_config:
+        print('Configuration structure OK. Hardware availability, pairing and motion are not tested.')
+        return
+    confirm_gello_start(cfg)
     teleop_loop(cfg)
 
 

@@ -2,6 +2,7 @@ import sys
 import tempfile
 import yaml
 import inspect
+import importlib
 from dataclasses import fields, is_dataclass
 from types import UnionType
 from typing import Union, get_args, get_origin
@@ -92,6 +93,8 @@ def _filtered_config_path(config_type, config_path):
     with config_path.open("r", encoding="utf-8") as f:
         raw_config = yaml.safe_load(f) or {}
 
+    _register_camera_configs(raw_config)
+
     filtered_config = _filter_unknown_config_fields(raw_config, config_type)
     if filtered_config == raw_config:
         return config_path, None
@@ -100,6 +103,23 @@ def _filtered_config_path(config_type, config_path):
     with tempfile.NamedTemporaryFile("w", suffix=suffix, encoding="utf-8", delete=False) as f:
         yaml.safe_dump(filtered_config, f, sort_keys=False, allow_unicode=True)
         return Path(f.name), Path(f.name)
+
+
+def _register_camera_configs(data):
+    """Load only camera types requested by this config, without opening devices."""
+    if isinstance(data, dict):
+        modules = {
+            "intelrealsense": "lerobot.cameras.realsense.configuration_realsense",
+            "opencv": "lerobot.cameras.opencv.configuration_opencv",
+        }
+        camera_type = data.get("type")
+        if isinstance(camera_type, str) and camera_type in modules:
+            importlib.import_module(modules[camera_type])
+        for value in data.values():
+            _register_camera_configs(value)
+    elif isinstance(data, list):
+        for value in data:
+            _register_camera_configs(value)
 
 
 def wrap(config_path: Path | None = None) -> Callable[[F], F]:

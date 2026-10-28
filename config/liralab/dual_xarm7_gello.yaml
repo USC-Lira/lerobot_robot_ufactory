@@ -1,0 +1,74 @@
+# Two distinct GELLO USB serial numbers must be mapped onsite.
+robot:
+  type: uf::multiple_robot
+  id: dual_xarm7
+  async_connect: false
+  async_configure: false
+  async_action: false
+  robots:
+    arm216:
+      type: uf::robot
+      id: arm216
+      robot_dof: 7
+      control_space: joint
+      robot_ip: "192.168.1.216"
+      gripper_type: 1
+      gripper_speed: 500
+      max_joint_velocity: 10
+      start_joints: null
+      # Shared scene cameras are opened once, under arm216.
+      cameras:
+        front:
+          type: intelrealsense
+          serial_number_or_name: "035622251296"
+          width: 640
+          height: 480
+          fps: 30
+        overhead:
+          type: intelrealsense
+          serial_number_or_name: "217222067304"
+          width: 640
+          height: 480
+          fps: 30
+    arm239:
+      type: uf::robot
+      id: arm239
+      robot_dof: 7
+      control_space: joint
+      robot_ip: "192.168.1.239"
+      gripper_type: 1
+      gripper_speed: 500
+      max_joint_velocity: 10
+      start_joints: null
+      cameras: {}
+teleop:
+  type: uf::multiple_gello_teleop
+  id: dual_gello
+  teleops:
+    arm216:
+      type: uf::gello_teleop
+      id: gello216
+      port: "/dev/serial/by-id/REPLACE_GELLO_216"
+      joint_ids: [1, 2, 3, 4, 5, 6, 7]
+      joint_signs: [1, 1, 1, 1, 1, 1, 1]
+      start_joints: [0, 0, 0, 0, 0, 0, 0]
+      gripper_id: 8
+    arm239:
+      type: uf::gello_teleop
+      id: gello239
+      port: "/dev/serial/by-id/REPLACE_GELLO_239"
+      joint_ids: [1, 2, 3, 4, 5, 6, 7]
+      joint_signs: [1, 1, 1, 1, 1, 1, 1]
+      start_joints: [0, 0, 0, 0, 0, 0, 0]
+      gripper_id: 8
+dataset:
+  root: "~/data/dual_xarm7_smoke"
+  repo_id: local/dual_xarm7_smoke
+  no_stamp: true
+  single_task: Dual GELLO teleoperation test
+  fps: 30
+  episode_time_s: 15
+  reset_time_s: 5
+  num_episodes: 1
+  push_to_hub: false
+  streaming_encoding: true
