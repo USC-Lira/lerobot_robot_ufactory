@@ -4,6 +4,8 @@
 
 UFACTORY robot arm integration with the LeRobot framework for robot learning, data collection, and policy deployment.
 
+**USC LIRA Lab:** [xArm7 + GELLO setup](guides/liralab-xarm-gello.md) for arms `.216` and `.239`, including dual GELLO configuration.
+
 ## Training & Inference Results
 
 [Test datasets](https://drive.google.com/drive/folders/1Ms25rd2YYGdh3tHPEsTTMU-m1fE7uNYY) used during development, **for reference only, do NOT reuse**. As the robot arm and camera positions during development differ from user setups.
