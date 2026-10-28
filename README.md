@@ -54,7 +54,7 @@ UFACTORY robot arm integration with the LeRobot framework for robot learning, da
 ### Base Install
 
 ```bash
-git clone https://github.com/xArm-Developer/lerobot_robot_ufactory.git
+git clone https://github.com/USC-Lira/lerobot_robot_ufactory.git
 cd lerobot_robot_ufactory
 
 # Create conda environment

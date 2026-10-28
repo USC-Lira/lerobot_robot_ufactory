@@ -52,7 +52,7 @@ UFACTORY(深圳市众为创造科技有限公司) 机械臂与 LeRobot 框架集
 ### 基础项目安装
 
 ```bash
-git clone https://github.com/xArm-Developer/lerobot_robot_ufactory.git
+git clone https://github.com/USC-Lira/lerobot_robot_ufactory.git
 cd lerobot_robot_ufactory
 
 # 创建 conda 环境
