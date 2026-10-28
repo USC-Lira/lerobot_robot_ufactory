@@ -384,7 +384,8 @@ class UFRobot(Robot, Thread):
         before_write_t = time.perf_counter()
         if self._control_space == "joint":
             # first sync with gello or other control device SLOWLY!
-            jnt_spd = INIT_SYNC_JOINT_VELOCITY_RAD if self._cmd_cnt < 20 else self._max_joint_velocity
+            jnt_spd = (min(INIT_SYNC_JOINT_VELOCITY_RAD, self._max_joint_velocity)
+                       if self._cmd_cnt < 20 else self._max_joint_velocity)
             wait_ = True if self._cmd_cnt == 0 else False
 
             cmd_list = [0]*(self._dof)

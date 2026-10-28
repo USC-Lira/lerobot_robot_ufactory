@@ -306,6 +306,26 @@ def test_no_homing_by_default_and_configured_homing_speed(monkeypatch, start_joi
         )
 
 
+@pytest.mark.parametrize("command_count", [0, 19, 20])
+@pytest.mark.parametrize("speed_degrees", [10, 90])
+def test_tracking_never_exceeds_configured_joint_speed(command_count, speed_degrees):
+    robot = UFRobot(
+        UFRobotConfig(
+            robot_dof=7,
+            gripper_type=0,
+            start_joints=None,
+            max_joint_velocity=speed_degrees,
+        )
+    )
+    robot._is_connected = True
+    robot._cmd_cnt = command_count
+    robot.real_arm = Mock(error_code=0, mode=0 if command_count == 0 else 6)
+    robot.send_action({f"J{i}.pos": 0.0 for i in range(1, 8)})
+    sent_speed = robot.real_arm.set_servo_angle.call_args.kwargs["speed"]
+    assert 0 < sent_speed <= math.radians(speed_degrees)
+    robot.disconnect()
+
+
 def test_dual_record_and_resume_with_simulated_hardware(monkeypatch, tmp_path):
     """Exercise the real recording/encoding path with synthetic leader/camera data."""
     from lerobot_robot_ufactory.utils.keyboard import KeyboardState
