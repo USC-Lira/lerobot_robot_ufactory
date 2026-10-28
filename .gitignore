@@ -47,7 +47,6 @@ Thumbs.db
 .env.local
 .env.*.local
 *.local.toml
-*.local.yaml
 
 # ============================
 # 测试 & 覆盖率
